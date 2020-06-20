@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script src="helpers.js"></script>
+</head>
+
+<body>
+	<div id='jaarrekening'>
+		<script>
+			const aAccounts = [
+				{ code: 20, amount: 1000, amountPY: 1000, credit: false },
+				{ code: 20, amount: 2000, amountPY: 2000, credit: false },
+				{ code: 20, amount: 3000, amountPY: 3000, credit: false },
+				{ code: 21, amount: 1100, amountPY: 1200, credit: true },
+				{ code: 21, amount: 1300, amountPY: -5400, credit: true },
+				{ code: 22, amount: 2100, amountPY: 2200, credit: false },
+				{ code: 22, amount: 2300, amountPY: 2400, credit: true },
+				{ code: 23, amount: 3100, amountPY: 3200, credit: true },
+				{ code: 23, amount: 3300, amountPY: 3400, credit: false },
+				{ code: 24, amount: 4100, amountPY: 4200, credit: false },
+				{ code: 24, amount: 4300, amountPY: 4400, credit: false },
+				{ code: 25, amount: 5100, amountPY: 5200, credit: true },
+				{ code: 25, amount: 5300, amountPY: 5400, credit: true },
+				{ code: 26, amount: 6100, amountPY: 6200, credit: false },
+				{ code: 26, amount: 6300, amountPY: 6400, credit: false },
+				{ code: 27, amount: 7100, amountPY: 7200, credit: false },
+				{ code: 27, amount: 7300, amountPY: 7400, credit: false }
+			];
+
+			//this is the only data that has to be changed when extra accounts are added, everything else is dynamic
+			const lookUpName = (key) => {
+				switch (key) {
+					case 20:
+						return "Oprichtingskosten"
+					case 21:
+						return "Immaterieel"
+					case 22:
+						return "Terreinen"
+					case 23:
+						return "Installaties"
+					case 24:
+						return "Meubilair"
+					case 25:
+						return "Leasing"
+					case 26:
+						return "Overig"
+					case 27:
+						return "Vooruitbetaling"
+					default:
+						//empty for the total row
+						return ""
+				}
+			}
+
+
+
+
+			//group together to have an easier view and have the data in the correct order (not that it really matters but it's easier in the long run)
+			const grouped = groupBy(aAccounts, account => account.code);
+
+			//aggregate the data into an array, key value pair is code: value
+			let total = [];
+			for (const [code, arr] of grouped.entries()) {
+				total[code] = { displayName: lookUpName(code), code: code, amount: 0, amountPY: 0 };
+				arr.forEach(element => {
+					//determine if we need to subtract or add to the total of that account
+					if (element.credit) {
+						total[code].amount -= element.amount
+						total[code].amountPY -= element.amountPY
+					} else {
+						total[code].amount += element.amount
+						total[code].amountPY += element.amountPY
+					}
+				});
+			}
+
+
+
+			//save a copy of all negative values before modifying the array
+			const negatives = total.filter(function (value) {
+				return value.amount < 0 || value.amountPY < 0;
+			});
+
+			//add some rows, order is important for the sum function
+			total.push({ displayName: "Totaal", code: null, amount: sum("amount", total), amountPY: sum("amountPY", total) })
+			total.unshift({ displayName: "Naam", code: "Code", amount: "Boekjaar", amountPY: "Vorig Boekjaar" })
+
+
+			//start the display of the data
+			const table = document.createElement('table');
+			document.body.appendChild(table); // Draw the main table on the document
+
+			total.forEach(function (row) {
+				const tr = table.insertRow(); //Create a new row
+
+				Object.values(row).forEach(function (column) {
+					const td = tr.insertCell();
+					td.innerText = column; // Take string from placeholder variable and append it to <tr> node
+				});
+			});
+
+			//display the text under the table; this can probably be made a bit more dynamic but it will lose readabillity 
+			negatives.forEach(element => {
+				const h1 = document.createElement('h1');
+				if (element.amount < 0 && element.amountPY < 0) {
+					h1.innerText = `${element.displayName} heeft een negatief bedrag. Boekjaar: ${element.amount} Vorig boekjaar: ${element.amountPY}`
+				} else if (element.amount < 0) {
+					h1.innerText = `${element.displayName} heeft een negatief bedrag. Boekjaar: ${element.amount}`
+				} else {
+					h1.innerText = `${element.displayName} heeft een negatief bedrag. Vorig boekjaar: ${element.amountPY}`
+				}
+				document.body.appendChild(h1);
+			});
+
+		</script>
+	</div>
+
+	<body>
+
+</html>
+
+<!-- De bedoeling is om met de array aAccounts de screenshot na te bouwen. De tabel moet zo dynamisch mogelijk zijn.
+ Aan de hand van de code wordt bepaald bij welke lijn de account bij hoort. Als credit true is moet dit worden afgetrokken i.p.v. opgeteld.
+ Dus als er accounts bijkomen in de array moet dit bij in de tabel komen zonder de code aan te passen.
+ Als er nieuwe lijnen voor nieuwe codes bv. 28 bijkomen moet dit dynamisch kunnen worden toegevoegd door de code zo min mogelijk aan te passen.
+ De rode tekst onderaan zijn er enkel als het bedrag negatief is. Als totaal negatief is moet dit ook worden getoond met een rode tekst 
+ 
+ Dit kan worden gemaakt met standaard native javascript in deze html pagina.
+ -->

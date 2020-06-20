@@ -1,0 +1,19 @@
+table {
+  width: fit-content;
+  border: 1px solid black;
+}
+
+tr:first-child td {
+  font-weight: bold;
+}
+
+td {
+  width: 25%;
+  padding: 2px 15px;
+  text-align: end;
+}
+
+h1 {
+  font-size: 18px;
+  color: red;
+}
